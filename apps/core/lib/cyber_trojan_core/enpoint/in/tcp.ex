@@ -23,7 +23,10 @@ defmodule CyberTrojan.Core.Endpoint.In.Tcp do
   
   # client side
   def start_link({addr, port}, opts \\ [])  do 
-    GenServer.start_link(__MODULE__, {addr, port}, opts)
+    DynamicSupervisor.start_child(
+      CyberTrojan.Core.Endpoint.DynamicSupervisor,
+      {__MODULE__, [{addr, port}, opts]}
+    )
   end
 
   def run(self) do  

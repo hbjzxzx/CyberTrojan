@@ -8,6 +8,25 @@ defmodule CyberTrojan.Core.Types do
   end
 end
 
+defmodule CyberTrojan.Core.Topology do
+  use CyberTrojan.Core.Types
+  
+  @type router_predict :: (src :: socket_addr(), dst :: socket_addr() -> Bool.t())
+
+  # boundary part
+  @callback start_link(args :: any()) :: any()
+
+  @callback next(self :: identifier(), item :: String.t()) :: {:ok, next_item :: String.t()} | nil
+  
+  @callback link(self :: identifier(), from :: String.t(), to :: String.t(), pred :: router_predict()) :: {:ok} | {:error, String.t()}
+  
+  # Core part
+  @callback get_next(item :: String.t(), state) :: {:ok, next_item :: String.t()} | nil
+  
+  @callback reigster_link(from :: String.t(), to :: String.t(), condition :: router_predict(),  state :: any()) :: {:ok, new_state :: any()} | {:error, String.t()}
+    
+end
+
 defmodule CyberTrojan.Core.Endpoint.In do
   use CyberTrojan.Core.Types
   
@@ -19,9 +38,12 @@ defmodule CyberTrojan.Core.Endpoint.In do
 
   @callback forward_socket(any(), socket :: gsocket(), src :: socket_addr(), dst :: socket_addr()) :: {:ok} | {:error, String.t()}
   
-  @callback run(any()) :: {:ok} | {:error, String.t()}
   
   @optional_callbacks run: 1
+  # Core part
+  @callback proxy_stream(raw_stream :: Enumerable.t(), src :: socket_addr(), dst :: socket_addr()) :: out 
+
+
 end
 
 defmodule CyberTrojan.Core.Endpoint.Out do
