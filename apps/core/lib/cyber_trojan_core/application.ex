@@ -11,8 +11,7 @@ defmodule CyberTrojan.Core.Application do
       # Starts a worker by calling: CyberTrojanCore.Worker.start_link(arg)
       # {CyberTrojanCore.Worker, arg}
       {DynamicSupervisor, name: CyberTrojan.Core.DynamicSupervisor, strategy: :one_for_one},
-      {DynamicSupervisor, name: CyberTrojan.Core.DynamicSupervisor.Listener, strategy: :one_for_one},
-      {Supervisor, name: CyberTrojan.Core.Supervisor, strategy: :one_for_rest}
+      {CyberTrojan.Core.Proxyer.Supervisor, name: CyberTrojan.Core.Proxyer.Supervisor}
     ]
 
     # See https://hexdocs.pm/elixir/Supervisor.html
