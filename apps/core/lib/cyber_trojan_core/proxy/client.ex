@@ -37,12 +37,30 @@ defmodule CyberTrojan.Core.Proxyer.Listener do
     {:ok, {socket}}
   end
   
-  #core 
+
+  @spec accept(any, port | {:"$inet", atom, any}) :: no_return
   def accept(n, socket) do
     Logger.info("Listener worker: #{n} waiting for connect...")
     {:ok, client} = :gen_tcp.accept(socket)
-    Logger.info("Listener worker: #{n} accept an connect")
+    {:ok, worker_pid} = Task.Supervisor.start_child(CyberTrojan.Core.Proxyer.Worker,
+                                             fn -> proxy(client) end, 
+                                             restart: :temporary)
+    :gen_tcp.controlling_process(client, worker_pid)
+    send(worker_pid, :start)
+    Logger.info("Listener worker: #{n} has accepted an connect")
     accept(n, socket)
+  end
+
+   
+  def proxy(client) do
+    Logger.info("new proxyer for connect stating...")
+    receive do
+      {:start} -> Logger.info("connect start to run")
+    end
+    {:ok, ori_dst} = :socket.ioctl(client, :gifdstaddr)
+    Logger.info("origin dst: #{IO.inspect(ori_dst)}")
+    :gen_tcp.send(client, "hello world, your origin dst is: #{IO.inspect(ori_dst)}")
+    :gen_tcp.close(client)
   end
 end
 
@@ -54,13 +72,14 @@ defmodule CyberTrojan.Core.Proxyer.Supervisor do
     Supervisor.start_link(__MODULE__, :ok, opts)
   end
   
-  def init(:ok) do
+  def init(_) do
     children = [
       {Task.Supervisor, name: CyberTrojan.Core.Proxyer.Acceptor, strategy: :one_for_one},
-      {DynamicSupervisor, name: CyberTrojan.Core.Proxyer.Worker, strategy: :one_for_one},
+      {Task.Supervisor, name: CyberTrojan.Core.Proxyer.Worker, strategy: :one_for_one},
       {CyberTrojan.Core.Proxyer.Listener, {2, "127.0.0.1", 1081}},
     ]
     opts = [strategy: :one_for_one, name: CyberTrojan.Core.Proxyer.Supervisor]
+
     Supervisor.init(children, opts)
   end
 end
