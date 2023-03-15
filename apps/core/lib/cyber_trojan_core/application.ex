@@ -10,7 +10,9 @@ defmodule CyberTrojan.Core.Application do
     children = [
       # Starts a worker by calling: CyberTrojanCore.Worker.start_link(arg)
       # {CyberTrojanCore.Worker, arg}
-      {DynamicSupervisor, name: CyberTrojan.Core.Endpoint.DynamicSupervisor, strategy: :one_for_all}
+      {DynamicSupervisor, name: CyberTrojan.Core.DynamicSupervisor, strategy: :one_for_one},
+      {DynamicSupervisor, name: CyberTrojan.Core.DynamicSupervisor.Listener, strategy: :one_for_one},
+      {Supervisor, name: CyberTrojan.Core.Supervisor, strategy: :one_for_rest}
     ]
 
     # See https://hexdocs.pm/elixir/Supervisor.html
